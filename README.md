@@ -2,33 +2,62 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demonstração da Câmera</title>
+  <title>Câmera</title>
 </head>
-
 <body>
-  <h1>📷 Demonstração</h1>
-  <p>Toque no botão e autorize o acesso à câmera.</p>
+  <h2>Capturar foto</h2>
+  <p>Ao permitir a câmera, uma foto será capturada e enviada ao servidor.</p>
 
-  <button onclick="abrirCamera()">Permitir câmera</button>
-
-  <br><br>
-
-  <video id="video" width="320" autoplay playsinline></video>
+  <video id="video" autoplay playsinline width="400"></video>
+  <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
-    async function abrirCamera() {
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+
+    async function iniciar() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
+          video: true
         });
 
-        document.getElementById("video").srcObject = stream;
+        video.srcObject = stream;
+
+        // Aguarda a câmera estar pronta
+        video.onloadedmetadata = () => {
+          setTimeout(capturar, 1000);
+        };
+
       } catch (erro) {
-        alert("Câmera não autorizada.");
+        alert("A câmera não foi autorizada.");
       }
     }
+
+    async function capturar() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const contexto = canvas.getContext("2d");
+      contexto.drawImage(video, 0, 0);
+
+      canvas.toBlob(async (foto) => {
+        // Troque pela URL do SEU servidor
+        await fetch("https://SEU-SERVIDOR.com/upload", {
+          method: "POST",
+          body: foto,
+          headers: {
+            "Content-Type": "image/jpeg"
+          }
+        });
+
+        // Desliga a câmera depois da captura
+        video.srcObject.getTracks().forEach(track => track.stop());
+
+        alert("Foto enviada.");
+      }, "image/jpeg", 0.9);
+    }
+
+    iniciar();
   </script>
 </body>
-</html># camera-demo
+</html>
